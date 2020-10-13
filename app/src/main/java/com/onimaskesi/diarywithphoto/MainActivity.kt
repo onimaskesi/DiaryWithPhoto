@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         if(item.itemId == R.id.add_entry){
-            val action = MemoriesFragmentDirections.actionMemoriesFragmentToİnsideOfMemoriesFragment()
+            val action = MemoriesFragmentDirections.actionMemoriesFragmentToİnsideOfMemoriesFragment("fromMenu",0)
             Navigation.findNavController(this, R.id.fragment).navigate(action)
         }
 
