@@ -12,10 +12,8 @@ import android.opengl.Visibility
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.database.getBlobOrNull
@@ -33,7 +31,12 @@ class InsideOfMemoriesFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        menu.clear()
     }
 
     override fun onCreateView(
@@ -113,8 +116,7 @@ class InsideOfMemoriesFragment : Fragment() {
                         }
 
                         // memories fragmentine geri dön
-                        val action = InsideOfMemoriesFragmentDirections.actionİnsideOfMemoriesFragmentToMemoriesFragment()
-                        Navigation.findNavController(it).navigate(action)
+                        Navigation.findNavController(it).popBackStack(R.id.memoriesFragment, false)
 
                     }
 
@@ -183,13 +185,13 @@ class InsideOfMemoriesFragment : Fragment() {
 
                     if(Build.VERSION.SDK_INT >= 28){
 
-                        val source = ImageDecoder.createSource(context!!.contentResolver , photo!!)
+                        val source = ImageDecoder.createSource(requireContext().contentResolver , photo!!)
                         photoBitmap = ImageDecoder.decodeBitmap(source)
                         choosePhoto.setImageBitmap(photoBitmap)
 
                     } else {
 
-                        photoBitmap = MediaStore.Images.Media.getBitmap(context!!.contentResolver , photo)
+                        photoBitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver , photo)
                         choosePhoto.setImageBitmap(photoBitmap)
 
                     }

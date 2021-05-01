@@ -3,6 +3,7 @@ package com.onimaskesi.diarywithphoto
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +11,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_memories.*
 
-class MemoriesFragment : Fragment() {
+class MemoriesFragment : Fragment(), RecyclerAdapter.DeleteBtnListener {
 
     var dateList = ArrayList<String>()
     var idList = ArrayList<Int>()
@@ -31,7 +32,7 @@ class MemoriesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = RecyclerAdapter(dateList, idList)
+        val adapter = RecyclerAdapter(dateList, idList, this)
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
@@ -60,6 +61,21 @@ class MemoriesFragment : Fragment() {
 
                 entriesAdapter.notifyDataSetChanged()
                 cursor.close()
+            }
+
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
+    }
+
+    override fun deleteClicked(id: Int) {
+        try {
+
+            activity?.let {
+
+                val database = it.openOrCreateDatabase("Diary", Context.MODE_PRIVATE, null)
+                database.execSQL("DELETE FROM Entries WHERE id = $id")
+
             }
 
         } catch (e: Exception){
