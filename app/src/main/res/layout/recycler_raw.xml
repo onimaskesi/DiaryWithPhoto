@@ -4,30 +4,44 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/colorBlack"
     >
 
     <TextView
         android:id="@+id/entryDate"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:layout_weight="10"
+        android:layout_weight="18"
         android:layout_margin="5dp"
-        android:background="@color/colorLightBlue"
         android:fontFamily="cursive"
         android:gravity="center"
         android:text="Deneme"
         android:textColor="@color/colorWhite"
+        android:background="@drawable/background"
         android:textSize="25dp"
         android:textStyle="bold">
     </TextView>
 
     <ImageButton
-        android:id="@+id/deleteBtn"
-        android:layout_width="0dp"
+        android:id="@+id/editBtn"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:layout_margin="5dp"
         android:layout_weight="1"
+        android:layout_margin="1dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_baseline_edit_24"
+        android:background="@drawable/background"
+        />
+
+    <ImageButton
+        android:id="@+id/deleteBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_weight="0.1"
+        android:layout_gravity="center"
+        android:layout_margin="5dp"
         android:src="@drawable/ic_baseline_close_24"
-        android:background="@color/colorLightBlue"/>
+        android:background="@drawable/background"/>
 
 </LinearLayout>

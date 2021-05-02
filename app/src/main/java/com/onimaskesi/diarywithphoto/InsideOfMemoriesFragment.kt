@@ -1,6 +1,7 @@
 package com.onimaskesi.diarywithphoto
 
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -29,6 +30,8 @@ class InsideOfMemoriesFragment : Fragment() {
     var photo : Uri? = null
     var photoBitmap : Bitmap? = null
 
+    var entryId = 1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -53,105 +56,179 @@ class InsideOfMemoriesFragment : Fragment() {
         arguments?.let {
 
             val info = InsideOfMemoriesFragmentArgs.fromBundle(it).info
+            entryId = InsideOfMemoriesFragmentArgs.fromBundle(it).id
 
-            if(info.equals("fromMenu")){
+            when (info) {
 
-                /*
-                saveButton.visibility = View.VISIBLE
-                dateText.setText("")
-                textText.setText("Dear Diary, ")
-                choosePhoto.setImageResource(R.drawable.choosephoto)
-                 */
+                "fromRecyclerForOpen" -> {
 
-                choosePhoto.setOnClickListener {
-                    //galeri izni ve galeriden görsel çekmek
-
-                    activity?.let{
-
-                        if(ContextCompat.checkSelfPermission(it.applicationContext , android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-                            // izin verilmemişse izin iste
-                            requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE) , 0)
-
-                        }else{
-
-                            val galleryIntent = Intent(Intent.ACTION_PICK , MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                            startActivityForResult(galleryIntent,1)
-
-                        }
-
-                    }
-                }
-
-                saveButton.setOnClickListener {
-
-                    val dateText = dateText.text.toString()
-                    val textText = textText.text.toString()
-
-                    if(photo != null){
-
-                        //SQLite'a bitmapi atabilmek için boyutunu küçültme işlemi
-                        val smallBitmap = makeSmallBitmap(photoBitmap!!,300)
-                        //SQLite'a kaydetmek için bitmap formatındaki görseli veriye çevirme işlemi
-                        val outputStream = ByteArrayOutputStream()
-                        smallBitmap.compress(Bitmap.CompressFormat.PNG, 50, outputStream)
-                        val byteArray = outputStream.toByteArray()
-
-                        try {
-
-                            context?.let {
-                                val database = it.openOrCreateDatabase("Diary",Context.MODE_PRIVATE,null)
-                                database.execSQL("CREATE TABLE IF NOT EXISTS Entries (id INTEGER PRIMARY KEY, date VARCHAR, text VARCHAR, photo BLOB )")
-
-                                val sqlString = "INSERT INTO Entries(date , text , photo) VALUES(? , ? , ?)"
-                                val statement = database.compileStatement(sqlString)
-                                statement.bindString(1, dateText)
-                                statement.bindString(2,textText)
-                                statement.bindBlob(3,byteArray)
-                                statement.execute()
-
-                            }
-
-                        } catch (e: Exception){
-                            e.printStackTrace()
-                        }
-
-                        // memories fragmentine geri dön
-                        Navigation.findNavController(it).popBackStack(R.id.memoriesFragment, false)
-
-                    }
+                    saveButton.visibility = View.GONE
+                    getDataAndShowThem(false)
 
                 }
+                "fromRecyclerForEdit" -> {
 
-            } else if(info.equals("fromRecycler")){
-
-                saveButton.visibility = View.INVISIBLE
-                val id = InsideOfMemoriesFragmentArgs.fromBundle(it).id
-
-                context?.let {
-                    val database = it.openOrCreateDatabase("Diary", Context.MODE_PRIVATE, null)
-                    val cursor = database.rawQuery("SELECT * FROM Entries WHERE id = ?", arrayOf(id.toString()))
-
-                    val dateIndex = cursor.getColumnIndex("date")
-                    val textIndex = cursor.getColumnIndex("text")
-                    val photoIndex = cursor.getColumnIndex("photo")
-
-                    while(cursor.moveToNext()){
-
-                        dateText.setText(cursor.getString(dateIndex))
-                        textText.setText(cursor.getString(textIndex))
-
-                        val photoByteArray = cursor.getBlob(photoIndex)
-                        val photoBitmap = BitmapFactory.decodeByteArray(photoByteArray,0, photoByteArray.size)
-                        choosePhoto.setImageBitmap(photoBitmap)
-                    }
+                    getDataAndShowThem(true)
+                    choosePhoto.setOnClickListener { choosePhotoClicked() }
+                    saveButton.setOnClickListener(this::saveButtonClickedForEdit)
 
                 }
+                else -> { //fromMenuForAdd
 
+                    choosePhoto.setOnClickListener { choosePhotoClicked() }
+                    saveButton.setOnClickListener(this::saveButtonClickedForNew)
+
+                }
             }
 
         }
 
+    }
 
+    fun saveButtonClickedForEdit(view: View){
+
+        update()
+        Navigation.findNavController(view).popBackStack(R.id.memoriesFragment, false)
+    }
+
+    fun saveButtonClickedForNew(view: View){
+
+        insert()
+        Navigation.findNavController(view).popBackStack(R.id.memoriesFragment, false)
+    }
+
+    fun getDataAndShowThem(makeTextsEditable : Boolean){
+
+        context?.let{ context ->
+
+            val database = context.openOrCreateDatabase("Diary", Context.MODE_PRIVATE, null)
+            val cursor = database.rawQuery("SELECT * FROM Entries WHERE id = ?", arrayOf(entryId.toString()))
+
+            val dateIndex = cursor.getColumnIndex("date")
+            val textIndex = cursor.getColumnIndex("text")
+            val photoIndex = cursor.getColumnIndex("photo")
+
+            while(cursor.moveToNext()){
+
+                dateText.setText(cursor.getString(dateIndex))
+                textText.setText(cursor.getString(textIndex))
+
+                if(!makeTextsEditable){
+
+                    dateText.isEnabled = false
+                    dateText.setTextColor(ContextCompat.getColor(context, R.color.colorBlack))
+                    dateText.textSize = 25f
+
+                    textText.isEnabled = false
+                    textText.setTextColor(ContextCompat.getColor(context, R.color.colorBlack))
+                }
+
+                val photoByteArray = cursor.getBlob(photoIndex)
+                val photoBitmap = BitmapFactory.decodeByteArray(photoByteArray,0, photoByteArray.size)
+                choosePhoto.setImageBitmap(photoBitmap)
+
+            }
+        }
+    }
+
+    //SQLite'a bitmapi atabilmek için boyutunu küçültme işlemi
+    //SQLite'a kaydetmek için bitmap formatındaki görseli veriye çevirme işlemi
+    fun bitmapToBytArray(bitmap : Bitmap) : ByteArray{
+
+        val smallBitmap = makeSmallBitmap(bitmap,300)
+        val outputStream = ByteArrayOutputStream()
+        smallBitmap.compress(Bitmap.CompressFormat.PNG, 50, outputStream)
+
+        return outputStream.toByteArray()
+    }
+
+    fun insert(){
+
+        val dateText = dateText.text.toString()
+        val textText = textText.text.toString()
+
+        if(photo != null){
+
+            val byteArray = bitmapToBytArray(photoBitmap!!)
+
+            try {
+
+                context?.let {
+                    val database = it.openOrCreateDatabase("Diary",Context.MODE_PRIVATE,null)
+                    database.execSQL("CREATE TABLE IF NOT EXISTS Entries (id INTEGER PRIMARY KEY, date VARCHAR, text VARCHAR, photo BLOB )")
+
+                    val sqlString = "INSERT INTO Entries(date , text , photo) VALUES(? , ? , ?)"
+                    val statement = database.compileStatement(sqlString)
+                    statement.bindString(1, dateText)
+                    statement.bindString(2,textText)
+                    statement.bindBlob(3,byteArray)
+                    statement.execute()
+
+                }
+
+            } catch (e: Exception){
+                e.printStackTrace()
+            }
+
+        }
+    }
+
+    fun update(){
+
+        val dateText = dateText.text.toString()
+        val textText = textText.text.toString()
+
+        val database = context?.openOrCreateDatabase("Diary",Context.MODE_PRIVATE,null)
+
+        if(photo != null){
+
+            val byteArray = bitmapToBytArray(photoBitmap!!)
+
+            val sqlString = "UPDATE Entries SET date = ?, text = ?, photo = ? WHERE id = $entryId"
+            val statement = database?.compileStatement(sqlString)
+            statement?.bindString(1, dateText)
+            statement?.bindString(2,textText)
+            statement?.bindBlob(3,byteArray)
+            statement?.execute()
+
+            /*
+            val cv = ContentValues()
+            cv.put("date", dateText)
+            cv.put("text", textText)
+            cv.put("photo", byteArray)
+            val whereclause = "id=?"
+            val whereargs = arrayOf(entryId.toString())
+            database.update("Entries", cv, whereclause, whereargs)
+             */
+
+        } else {
+
+            val sqlString = "UPDATE Entries SET date = ?, text = ? WHERE id = $entryId"
+            val statement = database?.compileStatement(sqlString)
+            statement?.bindString(1, dateText)
+            statement?.bindString(2,textText)
+            statement?.execute()
+
+        }
+    }
+
+    fun choosePhotoClicked(){
+        //galeri izni ve galeriden görsel çekmek
+
+        activity?.let{
+
+            if(ContextCompat.checkSelfPermission(it.applicationContext , android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                // izin verilmemişse izin iste
+                requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE) , 0)
+
+            }else{
+
+                val galleryIntent = Intent(Intent.ACTION_PICK , MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(galleryIntent,1)
+
+            }
+
+        }
     }
 
     override fun onRequestPermissionsResult(

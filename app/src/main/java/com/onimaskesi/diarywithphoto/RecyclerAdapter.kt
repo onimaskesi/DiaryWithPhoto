@@ -8,7 +8,9 @@ import androidx.navigation.Navigation
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.recycler_raw.view.*
 
-class RecyclerAdapter(val dateList : ArrayList<String>, val idList : ArrayList<Int>, val deleteBtnListener : DeleteBtnListener) : RecyclerView.Adapter<RecyclerAdapter.EntryHolder>() {
+class RecyclerAdapter(val dateList : ArrayList<String>,
+                      val idList : ArrayList<Int>,
+                      val deleteBtnListener : DeleteBtnListener) : RecyclerView.Adapter<RecyclerAdapter.EntryHolder>() {
 
 
     class EntryHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -27,10 +29,12 @@ class RecyclerAdapter(val dateList : ArrayList<String>, val idList : ArrayList<I
 
     override fun onBindViewHolder(holder: EntryHolder, position: Int) {
 
+        val id = idList.get(position)
+
         holder.itemView.entryDate.text = dateList.get(position)
         holder.itemView.deleteBtn.setOnClickListener {
 
-            val id = idList.get(position)
+
             deleteBtnListener.deleteClicked(id)
 
             idList.removeAt(position)
@@ -39,9 +43,14 @@ class RecyclerAdapter(val dateList : ArrayList<String>, val idList : ArrayList<I
 
         }
 
+        holder.itemView.editBtn.setOnClickListener {
+            val action = MemoriesFragmentDirections.actionMemoriesFragmentToİnsideOfMemoriesFragment("fromRecyclerForEdit", id)
+            Navigation.findNavController(it).navigate(action)
+        }
+
         holder.itemView.setOnClickListener {
 
-            val action = MemoriesFragmentDirections.actionMemoriesFragmentToİnsideOfMemoriesFragment("fromRecycler", idList.get(position))
+            val action = MemoriesFragmentDirections.actionMemoriesFragmentToİnsideOfMemoriesFragment("fromRecyclerForOpen", id)
             Navigation.findNavController(it).navigate(action)
 
         }
